@@ -3,226 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bankak Pro | استخراج بيانات الحساب</title>
-    <!-- استدعاء مكتبات الفايربيس -->
+    <title>استعلام بيانات الحساب</title>
+    <!-- استدعاء Firebase SDK v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root {
-            --primary-red: #d31027;
-            --primary-glow: rgba(211, 16, 39, 0.35);
-            --accent-gold: #c5a059;
-            --bg-night: #07090e;
-            --card-glass: rgba(14, 18, 27, 0.9);
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --text-pure: #f8fafc;
-            --text-dim: #94a3b8;
-            --success-cyan: #10b981;
+            --bg-body: #0f172a;        /* رمادي داكن هادئ */
+            --card-bg: #1e293b;        /* لون بطاقة مريح ونظيف */
+            --card-border: #334155;    /* حدود رمادية طبيعية */
+            --input-bg: #0f172a;
+            --primary: #2563eb;        /* أزرق عملي هادئ */
+            --primary-hover: #1d4ed8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background-color: var(--bg-night);
-            background-image: 
-                radial-gradient(circle at 10% 0%, rgba(211, 16, 39, 0.18) 0%, transparent 45%),
-                radial-gradient(circle at 90% 100%, rgba(197, 160, 89, 0.08) 0%, transparent 45%);
-            color: var(--text-pure);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-        }
-
-        /* شريط التنقل العلوي */
-        .top-navbar {
-            width: 100%;
-            height: 64px;
-            background: rgba(10, 13, 20, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border-glass);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 18px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 99;
-        }
-
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-brand-title {
-            font-size: 1.15rem;
-            font-weight: 800;
-        }
-
-        .nav-brand-title span {
-            color: var(--primary-red);
-        }
-
-        .btn-hamburger {
-            background: transparent;
-            border: 1px solid var(--border-glass);
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 5px;
-            cursor: pointer;
-        }
-
-        .btn-hamburger span {
-            width: 20px;
-            height: 2px;
-            background-color: #ffffff;
-            border-radius: 2px;
-            transition: 0.3s;
-        }
-
-        /* القائمة الجانبية (الثلاث شرطات) */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            z-index: 100;
-            display: none;
-        }
-
-        .sidebar-menu {
-            position: fixed;
-            top: 0;
-            right: -280px;
-            width: 270px;
-            height: 100%;
-            background: #0b0f19;
-            border-left: 1px solid var(--border-glass);
-            z-index: 101;
-            padding: 24px 18px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .sidebar-menu.active {
-            right: 0;
-        }
-
-        .sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-glass);
-            padding-bottom: 14px;
-            margin-bottom: 18px;
-        }
-
-        .sidebar-nav-links {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .sidebar-nav-links li a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
-            border-radius: 12px;
-            color: var(--text-pure);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .sidebar-nav-links li a:hover {
-            background: rgba(211, 16, 39, 0.12);
-            color: #ff6b7e;
-        }
-
-        .sidebar-nav-links li a svg {
-            width: 18px;
-            height: 18px;
-            stroke: currentColor;
-        }
-
-        /* منطقة العمل المركزية */
-        .main-container {
-            flex: 1;
-            padding: 90px 16px 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 16px;
         }
 
         .query-card {
             width: 100%;
-            max-width: 440px;
-            background: var(--card-glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glass);
-            border-radius: 24px;
-            padding: 30px 22px;
-            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85);
+            max-width: 420px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 26px 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
         }
 
         .card-header {
             text-align: center;
-            margin-bottom: 24px;
-        }
-
-        .badge-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(211, 16, 39, 0.12);
-            border: 1px solid rgba(211, 16, 39, 0.3);
-            padding: 5px 12px;
-            border-radius: 100px;
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: #ff6b7e;
-            margin-bottom: 10px;
+            margin-bottom: 22px;
         }
 
         .card-header h1 {
-            font-size: 1.35rem;
-            font-weight: 800;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
         }
 
         .card-header p {
             font-size: 0.85rem;
-            color: var(--text-dim);
+            color: var(--text-muted);
             margin-top: 4px;
         }
 
-        /* حقل الإدخال */
         .input-group {
-            margin-bottom: 18px;
+            margin-bottom: 16px;
         }
 
         .input-group label {
@@ -230,7 +74,7 @@
             font-size: 0.82rem;
             font-weight: 600;
             color: #cbd5e1;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .input-field-wrap {
@@ -239,36 +83,26 @@
             align-items: center;
         }
 
-        .input-field-wrap svg {
-            position: absolute;
-            right: 14px;
-            width: 18px;
-            height: 18px;
-            stroke: #64748b;
-            pointer-events: none;
-        }
-
         .input-field-wrap input {
             width: 100%;
-            background: rgba(5, 7, 12, 0.75);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            padding: 14px 44px 14px 14px;
-            font-size: 1rem;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 0.95rem;
             color: #ffffff;
             outline: none;
             text-align: left;
             direction: ltr;
-            transition: all 0.2s;
+            transition: border-color 0.2s;
         }
 
         .input-field-wrap input:focus {
-            border-color: var(--primary-red);
-            box-shadow: 0 0 0 3px var(--primary-glow);
+            border-color: var(--primary);
         }
 
         .input-field-wrap input::placeholder {
-            color: #475569;
+            color: #64748b;
             direction: rtl;
             text-align: right;
             font-size: 0.85rem;
@@ -276,256 +110,216 @@
 
         .btn-query {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, var(--primary-red), #990c1c);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 14px;
+            padding: 12px;
+            background: var(--primary);
+            border: none;
+            border-radius: 10px;
             color: #ffffff;
-            font-size: 0.95rem;
-            font-weight: 700;
+            font-size: 0.92rem;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 8px 24px -6px var(--primary-glow);
-            transition: transform 0.1s;
+            transition: background 0.2s;
+        }
+
+        .btn-query:hover {
+            background: var(--primary-hover);
         }
 
         .btn-query:active {
-            transform: scale(0.98);
+            transform: scale(0.99);
         }
 
-        /* لودر فحص السجلات */
+        /* مؤشر التحميل السريع */
         .loading-box {
             display: none;
             text-align: center;
-            padding: 24px 0;
+            padding: 20px 0;
         }
 
         .spinner-ring {
-            width: 44px;
-            height: 44px;
-            border: 3px solid rgba(255, 255, 255, 0.08);
-            border-top: 3px solid var(--primary-red);
-            border-right: 3px solid var(--accent-gold);
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--primary);
             border-radius: 50%;
-            margin: 0 auto 12px;
-            animation: spin 0.8s linear infinite;
+            margin: 0 auto 10px;
+            animation: spin 0.7s linear infinite;
         }
 
-        .loading-title { font-size: 0.9rem; font-weight: 700; color: #fff; }
-        .loading-subtitle { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+        .loading-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
 
-        /* بطاقة عرض النتيجة */
+        /* كرت عرض النتيجة المنسقة */
         .result-panel {
             display: none;
-            margin-top: 20px;
-            background: rgba(8, 11, 18, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 18px;
-            padding: 18px;
-            animation: fadeIn 0.3s ease-out;
+            margin-top: 18px;
+            background: #0f172a;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
         }
 
         .result-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            padding-bottom: 10px;
-            margin-bottom: 14px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         .result-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--accent-gold);
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #94a3b8;
         }
 
         .status-badge {
             font-size: 0.72rem;
-            padding: 3px 8px;
-            background: rgba(16, 185, 129, 0.12);
-            color: var(--success-cyan);
+            padding: 2px 8px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
             border-radius: 6px;
-            font-weight: 700;
-            border: 1px solid rgba(16, 185, 129, 0.25);
+            font-weight: 600;
         }
 
+        /* صندوق إبراز رقم الهاتف مع زر النسخ */
         .phone-callout {
-            background: rgba(211, 16, 39, 0.1);
-            border: 1px solid rgba(211, 16, 39, 0.25);
-            border-radius: 14px;
-            padding: 12px 16px;
+            background: #1e293b;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 10px 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
         .phone-val {
-            font-size: 1.2rem;
-            font-weight: 800;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #38bdf8;
             direction: ltr;
         }
 
         .btn-copy {
-            background: var(--primary-red);
+            background: #334155;
             border: none;
-            color: #fff;
-            padding: 8px 14px;
-            border-radius: 8px;
+            color: #ffffff;
+            padding: 6px 14px;
+            border-radius: 6px;
             font-size: 0.78rem;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: #475569;
         }
 
         .data-row {
             display: flex;
             justify-content: space-between;
             font-size: 0.82rem;
-            padding: 7px 0;
-            border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         }
 
         .data-row:last-child {
             border-bottom: none;
         }
 
-        .data-label { color: var(--text-dim); }
+        .data-label { color: var(--text-muted); }
         .data-val { font-weight: 600; direction: ltr; }
 
         .btn-reset {
             width: 100%;
             margin-top: 14px;
-            padding: 10px;
+            padding: 9px;
             background: transparent;
-            border: 1px solid var(--border-glass);
-            border-radius: 10px;
-            color: var(--text-dim);
-            font-size: 0.82rem;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
             cursor: pointer;
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
         }
 
         .alert-box {
             display: none;
             font-size: 0.8rem;
             color: #f87171;
-            background: rgba(239, 68, 68, 0.08);
+            background: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.2);
-            border-radius: 10px;
+            border-radius: 8px;
             padding: 10px;
             text-align: center;
-            margin-top: 14px;
+            margin-top: 12px;
         }
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <!-- الشريط العلوي -->
-    <header class="top-navbar">
-        <div class="nav-brand">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--primary-red)"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
-            <span class="nav-brand-title">BANKAK <span>PRO</span></span>
+    <div class="query-card">
+        <div class="card-header">
+            <h1>استخراج الهاتف المرتبط</h1>
+            <p>أدخل رقم الحساب أو CIF للاستعلام الفوري</p>
         </div>
-        <button class="btn-hamburger" onclick="toggleSidebar()">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-    </header>
 
-    <!-- القائمة الجانبية (الثلاث شرطات) -->
-    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <aside id="sidebarMenu" class="sidebar-menu">
-        <div>
-            <div class="sidebar-header">
-                <span style="font-size:0.9rem; font-weight:700;">القائمة الرئيسية</span>
-                <button onclick="toggleSidebar()" style="background:transparent; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">✕</button>
+        <div class="input-group">
+            <label>رقم الحساب أو CIF</label>
+            <div class="input-field-wrap">
+                <input type="tel" id="cifInput" placeholder="أدخل الرقم هنا (مثال: 3034035)" autocomplete="off">
             </div>
-            <ul class="sidebar-nav-links">
-                <li>
-                    <a onclick="toggleSidebar()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <span>الاستعلام السريع</span>
-                    </a>
-                </li>
-                <li>
-                    <a onclick="contactTelegram()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                        <span>الدعم الفني والاشتراكات</span>
-                    </a>
-                </li>
-            </ul>
         </div>
-        <div>
-            <p style="font-size:0.75rem; color:var(--text-dim); text-align:center;">Bankak Query System © 2026</p>
+
+        <button id="btnSearch" class="btn-query" onclick="runExtraction()">استخراج البيانات</button>
+
+        <!-- لودر خفيف وسريع -->
+        <div id="loadingBox" class="loading-box">
+            <div class="spinner-ring"></div>
+            <div class="loading-title">جاري معالجة الطلب...</div>
         </div>
-    </aside>
 
-    <!-- الحاوية المركزية للاستعلام المباشر -->
-    <main class="main-container">
-        <div class="query-card">
-            
-            <div class="card-header">
-                <div class="badge-pill">
-                    <span>⚡ استخراج فوري ومعتمد</span>
-                </div>
-                <h1>استخراج الهاتف المرتبط</h1>
-                <p>أدخل رقم الحساب أو رقم العميل (CIF) للحصول على البيانات</p>
+        <!-- بطاقة النتيجة -->
+        <div id="resultPanel" class="result-panel">
+            <div class="result-head">
+                <span class="result-title">البيانات المستخرجة</span>
+                <span id="accountStatusTag" class="status-badge">نشط ✅</span>
             </div>
 
-            <div class="input-group">
-                <label>رقم الحساب أو CIF</label>
-                <div class="input-field-wrap">
-                    <input type="tel" id="cifInput" placeholder="أدخل الرقم هنا (مثال: 3034035)" autocomplete="off">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <div class="phone-callout">
+                <div>
+                    <span style="font-size:0.72rem; color:var(--text-muted); display:block;">الهاتف المربوط:</span>
+                    <div id="resPhone" class="phone-val">--</div>
                 </div>
+                <button class="btn-copy" onclick="copyPhone()">
+                    <span id="copyBtnText">نسخ</span>
+                </button>
             </div>
 
-            <button id="btnSearch" class="btn-query" onclick="runExtraction()">استخراج البيانات المصرفية</button>
+            <div class="data-row"><span class="data-label">اسم العميل:</span><span id="resName" class="data-val">--</span></div>
+            <div class="data-row"><span class="data-label">رقم العميل (CIF):</span><span id="resCif" class="data-val">--</span></div>
+            <div class="data-row"><span class="data-label">الفرع:</span><span id="resBranch" class="data-val">--</span></div>
+            <div class="data-row"><span class="data-label">رقم الحساب:</span><span id="resAccount" class="data-val">--</span></div>
 
-            <!-- مؤشر التحميل أثناء اتصال بايثون بالتليجرام -->
-            <div id="loadingBox" class="loading-box">
-                <div class="spinner-ring"></div>
-                <div id="loadTitle" class="loading-title">جاري الاتصال بالسجلات المركزية...</div>
-                <div id="loadSub" class="loading-subtitle">يرجى الانتظار، يتم فك التشفير ومطابقة السجل</div>
-            </div>
-
-            <!-- بطاقة عرض النتيجة المنسقة -->
-            <div id="resultPanel" class="result-panel">
-                <div class="result-head">
-                    <span class="result-title">بيانات الحساب المعتمدة</span>
-                    <span id="accountStatusTag" class="status-badge">نشط ✅</span>
-                </div>
-
-                <div class="phone-callout">
-                    <div>
-                        <span style="font-size:0.72rem; color:#ff8b99; display:block;">الهاتف المربوط:</span>
-                        <div id="resPhone" class="phone-val">--</div>
-                    </div>
-                    <button class="btn-copy" onclick="copyPhone()">
-                        <span id="copyBtnText">نسخ</span>
-                    </button>
-                </div>
-
-                <div class="data-row"><span class="data-label">اسم العميل:</span><span id="resName" class="data-val">--</span></div>
-                <div class="data-row"><span class="data-label">رقم العميل (CIF):</span><span id="resCif" class="data-val">--</span></div>
-                <div class="data-row"><span class="data-label">الفرع:</span><span id="resBranch" class="data-val">--</span></div>
-                <div class="data-row"><span class="data-label">رقم الحساب:</span><span id="resAccount" class="data-val">--</span></div>
-
-                <button class="btn-reset" onclick="resetQuery()">استعلام جديد</button>
-            </div>
-
-            <div id="alertBox" class="alert-box"></div>
+            <button class="btn-reset" onclick="resetQuery()">استعلام جديد</button>
         </div>
-    </main>
+
+        <div id="alertBox" class="alert-box"></div>
+    </div>
 
 <script>
-    // --- 1. يوزر تليجرام للدعم الفني ---
-    const TELEGRAM_USER = "suui_7";
-
-    // --- 2. إعدادات Firebase لمشروعك apryy-ac426 ---
+    // إعدادات Firebase الخاصة بمشروعك
     const firebaseConfig = {
         apiKey: "AIzaSyBEF4_R1dnOwpZefYNOMazBhnsmB_SjIHQ",
         authDomain: "apryy-ac426.firebaseapp.com",
@@ -540,33 +334,16 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // القائمة الجانبية (الثلاث شرطات)
-    function toggleSidebar() {
-        const menu = document.getElementById("sidebarMenu");
-        const overlay = document.getElementById("sidebarOverlay");
-        menu.classList.toggle("active");
-        overlay.style.display = menu.classList.contains("active") ? "block" : "none";
-    }
-
-    function contactTelegram() {
-        toggleSidebar();
-        window.open(`https://t.me/${TELEGRAM_USER}`, "_blank");
-    }
-
-    // تشغيل الاستعلام
-    let t1, t2;
     function runExtraction() {
         const input = document.getElementById("cifInput");
         const btn = document.getElementById("btnSearch");
         const loader = document.getElementById("loadingBox");
         const resultPanel = document.getElementById("resultPanel");
         const alertBox = document.getElementById("alertBox");
-        const loadTitle = document.getElementById("loadTitle");
-        const loadSub = document.getElementById("loadSub");
 
         const val = input.value.trim();
         if (!val) {
-            showAlert("يرجى كتابة رقم الحساب أو الـ CIF أولاً");
+            showAlert("يرجى إدخال رقم الحساب أو الـ CIF أولاً");
             return;
         }
 
@@ -575,20 +352,7 @@
         btn.style.display = "none";
         loader.style.display = "block";
 
-        loadTitle.innerText = "جاري الاتصال بالسجلات المركزية...";
-        loadSub.innerText = "يتم تدقيق الحساب وفك التشفير";
-
-        t1 = setTimeout(() => {
-            loadTitle.innerText = "جاري استخراج السجل المرتبط...";
-            loadSub.innerText = "يتم التحقق من مطابقة الهاتف مع السيرفر";
-        }, 2200);
-
-        t2 = setTimeout(() => {
-            loadTitle.innerText = "اكتمال المعالجة...";
-            loadSub.innerText = "جلب التقرير المصرفي المعتمد";
-        }, 4500);
-
-        // إنشاء سجل جديد في inquiries للبايثون
+        // إرسال الطلب فوراً
         const reqRef = db.ref("inquiries").push();
         reqRef.set({
             query_value: val,
@@ -596,19 +360,17 @@
             result: "",
             timestamp: Date.now()
         }).then(() => {
-            // الاستماع للنتيجة لحظياً فور رد سكريبت بايثون
+            // استماع فوري مباشر دون أي تأخير زمني
             reqRef.on("value", (snap) => {
                 const data = snap.val();
                 if (!data) return;
 
                 if (data.status === "completed") {
-                    cleanupTimers();
                     loader.style.display = "none";
                     btn.style.display = "block";
                     renderData(data.result);
-                    reqRef.off();
+                    reqRef.off(); // إيقاف الاستماع فور استلام النتيجة
                 } else if (data.status === "failed") {
-                    cleanupTimers();
                     loader.style.display = "none";
                     btn.style.display = "block";
                     showAlert("تعذر إكمال الاستعلام: " + (data.result || "يرجى التحقق من الرقم"));
@@ -616,14 +378,12 @@
                 }
             });
         }).catch((err) => {
-            cleanupTimers();
             loader.style.display = "none";
             btn.style.display = "block";
             showAlert("خطأ في الاتصال: " + err.message);
         });
     }
 
-    // تفكيك وتوزيع نص التيليجرام داخل البطاقة
     function renderData(raw) {
         const phoneMatch = raw.match(/رقم الهاتف المربوط[:\s]+([^\n\r]+)/);
         const nameMatch = raw.match(/اسم صاحب الحساب[:\s]+([^\n\r]+)/);
@@ -642,25 +402,19 @@
         document.getElementById("resultPanel").style.display = "block";
     }
 
-    // نسخ الهاتف
     function copyPhone() {
         const phone = document.getElementById("resPhone").innerText.trim();
         if (!phone || phone === "--" || phone === "غير متوفر") return;
         navigator.clipboard.writeText(phone).then(() => {
             const btn = document.getElementById("copyBtnText");
             btn.innerText = "تم النسخ ✓";
-            setTimeout(() => { btn.innerText = "نسخ"; }, 2000);
+            setTimeout(() => { btn.innerText = "نسخ"; }, 1500);
         });
     }
 
     function resetQuery() {
         document.getElementById("cifInput").value = "";
         document.getElementById("resultPanel").style.display = "none";
-    }
-
-    function cleanupTimers() {
-        clearTimeout(t1);
-        clearTimeout(t2);
     }
 
     function showAlert(msg) {
